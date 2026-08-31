@@ -1,0 +1,21 @@
+node_modules/
+.expo/
+dist/
+web-build/
+android/
+ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.env
+.env.local
+npm-debug.*
+yarn-error.*
+.DS_Store
+
+# Generated screenshot galleries (large base64-embedded HTML; regenerate from docs/screenshots)
+docs/*.html
+docs/.gallery-tmp/
+docs/.glass-tmp/

@@ -1,0 +1,195 @@
+definitions:
+  # Each step is anchored individually: a YAML anchor pointing at a *list*
+  # would nest a list inside `scripts`, which Codemagic rejects.
+  scripts:
+    - &install_pnpm
+      name: Install pnpm
+      script: npm install -g pnpm@11
+
+    - &install_deps
+      name: Install dependencies
+      # --frozen-lockfile keeps CI honest about pnpm-lock.yaml.
+      # This repo carries its own pnpm-workspace.yaml, so pnpm treats it as the
+      # workspace root instead of walking up the filesystem.
+      script: pnpm install --frozen-lockfile
+
+    - &typecheck
+      name: Typecheck
+      script: pnpm exec tsc --noEmit
+
+    - &prebuild
+      name: Generate the native Android project
+      # android/ is not committed; prebuild regenerates it and re-applies the
+      # release signing config from plugins/withReleaseSigning.js.
+      script: pnpm exec expo prebuild --platform android --no-install --clean
+
+workflows:
+  # ---------------------------------------------------------------------------
+  # Sideloadable APK. Needs no signing setup — the release build falls back to
+  # the debug keystore. Good for installing on your own device.
+  # ---------------------------------------------------------------------------
+  android-apk:
+    name: Android APK (sideload)
+    instance_type: linux_x2
+    max_build_duration: 45
+    environment:
+      node: 24
+      java: 17
+    cache:
+      cache_paths:
+        - ~/.pnpm-store
+    scripts:
+      - *install_pnpm
+      - *install_deps
+      - *typecheck
+      - *prebuild
+      - name: Build release APK
+        script: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - support@xocat.online
+        notify:
+          success: true
+          failure: true
+
+  # ---------------------------------------------------------------------------
+  # Play Store AAB. Requires an upload keystore.
+  #
+  # In Codemagic: Teams -> Integrations -> Code signing identities -> Android
+  # keystores, upload the .jks with reference name `weao_upload`. Codemagic then
+  # exposes CM_KEYSTORE_PATH / CM_KEYSTORE_PASSWORD / CM_KEY_ALIAS /
+  # CM_KEY_PASSWORD, which the step below hands to Gradle.
+  # ---------------------------------------------------------------------------
+  android-play:
+    name: Android AAB (Play Store)
+    instance_type: linux_x2
+    max_build_duration: 45
+    environment:
+      node: 24
+      java: 17
+      android_signing:
+        - weao_upload
+    cache:
+      cache_paths:
+        - ~/.pnpm-store
+    scripts:
+      - *install_pnpm
+      - *install_deps
+      - *typecheck
+      - *prebuild
+      - name: Point Gradle at the upload keystore
+        script: |
+          set -e
+          if [ -z "$CM_KEYSTORE_PATH" ]; then
+            echo "No keystore attached. Add one named 'weao_upload' in Codemagic." >&2
+            exit 1
+          fi
+          {
+            echo "WEAO_STORE_FILE=$CM_KEYSTORE_PATH"
+            echo "WEAO_STORE_PASSWORD=$CM_KEYSTORE_PASSWORD"
+            echo "WEAO_KEY_ALIAS=$CM_KEY_ALIAS"
+            echo "WEAO_KEY_PASSWORD=$CM_KEY_PASSWORD"
+          } >> android/gradle.properties
+      - name: Build release bundle
+        script: |
+          cd android
+          ./gradlew bundleRelease --no-daemon
+      - name: Confirm the bundle is not debug-signed
+        # Cheap guard against shipping a build that silently used the fallback key.
+        script: |
+          set -e
+          BUNDLE=$(find android/app/build/outputs -name '*.aab' | head -1)
+          if [ -z "$BUNDLE" ]; then
+            echo "No .aab produced." >&2
+            exit 1
+          fi
+          if unzip -p "$BUNDLE" 'META-INF/*.RSA' 2>/dev/null \
+              | keytool -printcert 2>/dev/null \
+              | grep -qi 'CN=Android Debug'; then
+            echo "Bundle was signed with the debug key - refusing to publish." >&2
+            exit 1
+          fi
+          echo "Signed with the upload key: $BUNDLE"
+    artifacts:
+      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/mapping.txt
+    publishing:
+      email:
+        recipients:
+          - support@xocat.online
+        notify:
+          success: true
+          failure: true
+      # Uncomment once a Play service account JSON is stored in Codemagic.
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT
+      #   track: internal
+
+  # ---------------------------------------------------------------------------
+  # iOS simulator build. Needs no Apple Developer account and no signing — it
+  # produces a .app you can drag onto a running simulator.
+  #
+  # Xcode 26 is required: Liquid Glass (expo-glass-effect -> UIVisualEffectView)
+  # only compiles in, and only renders on, iOS 26 and its SDK. On an older
+  # simulator the app still runs and falls back to expo-blur.
+  # ---------------------------------------------------------------------------
+  ios-simulator:
+    name: iOS simulator (.app, unsigned)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      node: 24
+      xcode: 26.0
+      cocoapods: default
+    cache:
+      cache_paths:
+        - ~/.pnpm-store
+        - $CM_BUILD_DIR/ios/Pods
+    scripts:
+      - name: Install pnpm
+        script: npm install -g pnpm@11
+      - name: Install dependencies
+        script: pnpm install --frozen-lockfile
+      - name: Typecheck
+        script: pnpm exec tsc --noEmit
+      - name: Generate the native iOS project
+        # ios/ is not committed, and cannot be generated on Windows at all —
+        # `expo prebuild --platform ios` refuses to run there.
+        script: pnpm exec expo prebuild --platform ios --no-install --clean
+      - name: Install pods
+        script: |
+          cd ios
+          pod install
+      - name: Build for the simulator
+        script: |
+          set -e
+          SCHEME=$(xcodebuild -workspace ios/*.xcworkspace -list -json \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['workspace']['schemes'][0])")
+          echo "Building scheme $SCHEME"
+          xcodebuild \
+            -workspace ios/*.xcworkspace \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Collect the .app
+        script: |
+          mkdir -p artifacts
+          cp -R build/Build/Products/Release-iphonesimulator/*.app artifacts/
+          cd artifacts && zip -qr weao-ios-simulator.zip *.app
+    artifacts:
+      - artifacts/*.zip
+    publishing:
+      email:
+        recipients:
+          - support@xocat.online
+        notify:
+          success: true
+          failure: true

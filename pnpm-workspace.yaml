@@ -1,0 +1,7 @@
+# Declares weao-app as its own pnpm workspace root.
+# Without this, pnpm walks up and finds C:\Users\santi\pnpm-workspace.yaml,
+# which would install this project's deps into C:\Users\santi\node_modules.
+packages: []
+
+# React Native / Metro + Expo autolinking expect a flat node_modules.
+nodeLinker: hoisted
