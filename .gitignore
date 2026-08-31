@@ -19,3 +19,4 @@ yarn-error.*
 docs/*.html
 docs/.gallery-tmp/
 docs/.glass-tmp/
+.release/
