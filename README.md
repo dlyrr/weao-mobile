@@ -181,6 +181,36 @@ cd android && ./gradlew assembleRelease --no-daemon
 `android/local.properties` must point at the SDK (`sdk.dir=C:/Users/santi/Android/Sdk`);
 it is gitignored and regenerated per machine.
 
+### Signing
+
+Release builds are signed with an upload key supplied through Gradle
+properties, read from `~/.gradle/gradle.properties` so the credentials never
+enter the repo:
+
+```properties
+WEAO_STORE_FILE=C:/Users/santi/keys/weao-upload.jks
+WEAO_STORE_PASSWORD=...
+WEAO_KEY_ALIAS=weao
+WEAO_KEY_PASSWORD=...
+```
+
+**Back that keystore up.** Android identifies an app by its signature, so
+losing it means never being able to ship an update to anyone who already
+installed the app — they would have to uninstall and lose their data. If the
+properties are absent the build falls back to the debug key, which produces an
+installable APK that must never be distributed.
+
+### Per-ABI output
+
+`assembleRelease` emits one APK per architecture rather than a universal one,
+because a fat APK carries native libraries for four ABIs, two of which only run
+in an emulator:
+
+| APK | For |
+|---|---|
+| `app-arm64-v8a-release.apk` | every modern phone |
+| `app-armeabi-v7a-release.apk` | older 32-bit devices |
+
 A first build takes well over ten minutes because of the native compilation, so
 run it detached rather than inside anything that imposes a timeout.
 
