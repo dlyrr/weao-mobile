@@ -54,7 +54,7 @@ export default function SettingsScreen() {
       if (!granted) {
         Alert.alert(
           'Notifications blocked',
-          'Enable notifications for WhatExpsAre.Online in your system settings, then try again.',
+          'Enable notifications for WEAO in your system settings, then try again.',
         );
         return;
       }

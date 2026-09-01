@@ -57,7 +57,9 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Exploits',
-          headerTitle: 'WhatExpsAre.Online',
+          // The full name truncates to "WhatExps..." on a launcher and crowds
+          // the header; the site's own short form is WEAO.
+          headerTitle: 'WEAO',
           tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
         }}
       />

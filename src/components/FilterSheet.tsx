@@ -232,6 +232,9 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
   },
   sheet: {
+    // Must be shrinkable too, or the sheet ignores sheetWrapper's 85% cap and
+    // there is nothing for the scroll area to shrink inside of.
+    flexShrink: 1,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderWidth: 1,
@@ -261,7 +264,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   scroll: {
+    // flexShrink defaults to 0 in React Native, so without this the scroll area
+    // insists on its full content height, overflows the sheet's 85% cap and
+    // pushes the "Show results" button off-screen on shorter or wider screens.
     flexGrow: 0,
+    flexShrink: 1,
   },
   scrollContent: {
     paddingBottom: 12,

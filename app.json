@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "WhatExpsAre.Online",
+    "name": "WEAO",
     "slug": "weao-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "weao",
@@ -25,7 +25,8 @@
           "fetch",
           "processing"
         ]
-      }
+      },
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.dlyrr.weao",
@@ -37,7 +38,8 @@
         "NOTIFICATIONS",
         "RECEIVE_BOOT_COMPLETED",
         "WAKE_LOCK"
-      ]
+      ],
+      "versionCode": 2
     },
     "plugins": [
       "./plugins/withReleaseSigning",
