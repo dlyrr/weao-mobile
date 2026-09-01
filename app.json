@@ -2,7 +2,7 @@
   "expo": {
     "name": "WEAO",
     "slug": "weao-app",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "weao",
@@ -26,7 +26,7 @@
           "processing"
         ]
       },
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "package": "com.dlyrr.weao",
@@ -39,7 +39,7 @@
         "RECEIVE_BOOT_COMPLETED",
         "WAKE_LOCK"
       ],
-      "versionCode": 2
+      "versionCode": 3
     },
     "plugins": [
       "./plugins/withReleaseSigning",
