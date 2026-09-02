@@ -25,6 +25,7 @@ import type { Exploit } from '../../src/api/types';
 import { TAB_BAR_BASE_HEIGHT } from './_layout';
 import { ExploitCard } from '../../src/components/ExploitCard';
 import { FilterSheet } from '../../src/components/FilterSheet';
+import { UpdateBanner } from '../../src/components/UpdateCard';
 import { RainBurst, useRainBurst } from '../../src/components/ThemeRain';
 import { SectionHeader } from '../../src/components/ui';
 import { useWeaoData } from '../../src/state/data';
@@ -137,6 +138,8 @@ export default function ExploitsScreen() {
           )}
         </Pressable>
       </View>
+
+      <UpdateBanner onOpenSettings={() => router.push('/settings')} />
 
       {error && !loading && (
         <View style={[styles.banner, { backgroundColor: c.warningYellowBg, borderColor: c.warningYellowBorder }]}>

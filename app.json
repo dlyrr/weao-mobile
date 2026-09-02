@@ -2,18 +2,13 @@
   "expo": {
     "name": "WEAO",
     "slug": "weao-app",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "weao",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#1a1a1a",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1a1a1a"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -26,7 +21,7 @@
           "processing"
         ]
       },
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "package": "com.dlyrr.weao",
@@ -37,9 +32,10 @@
       "permissions": [
         "NOTIFICATIONS",
         "RECEIVE_BOOT_COMPLETED",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "REQUEST_INSTALL_PACKAGES"
       ],
-      "versionCode": 3
+      "versionCode": 4
     },
     "plugins": [
       "./plugins/withReleaseSigning",
@@ -52,6 +48,19 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#3bea57"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#1a1a1a",
+          "dark": {
+            "image": "./assets/splash.png",
+            "backgroundColor": "#1a1a1a"
+          }
         }
       ]
     ],

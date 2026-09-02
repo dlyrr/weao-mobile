@@ -10,6 +10,7 @@ import { VERSION_PLATFORMS, type VersionPlatform } from '../../src/api/types';
 import { TAB_BAR_BASE_HEIGHT } from './_layout';
 import { useIsLiquidGlass } from '../../src/components/Glass';
 import { Surface } from '../../src/components/Surface';
+import { UpdateCard } from '../../src/components/UpdateCard';
 import { SectionHeader } from '../../src/components/ui';
 import {
   isBackgroundTaskRegistered,
@@ -287,6 +288,10 @@ export default function SettingsScreen() {
           </SettingCard>
         </>
       )}
+
+      {/* ------------------------------- Updates ----------------------------- */}
+      <SectionHeader title="Updates" />
+      <UpdateCard />
 
       {/* ------------------------------- About ------------------------------- */}
       <SectionHeader title="About" />
